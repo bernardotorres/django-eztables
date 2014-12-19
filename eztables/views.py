@@ -78,7 +78,7 @@ class DatatablesView(MultipleObjectMixin, View):
             fields = self.fields.values() if isinstance(self.fields, dict) else self.fields
             for field in fields:
                 if callable(field):
-                     continue
+                    continue
                 elif RE_FORMATTED.match(field):
                     self._db_fields.extend(RE_FORMATTED.findall(field))
                 else:
