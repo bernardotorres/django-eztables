@@ -208,13 +208,13 @@ class DatatablesView(MultipleObjectMixin, View):
         '''Format a single row (if necessary)'''
 
         if isinstance(self.fields, dict):
-            return dict([(
-                field, self.get_field_value(row, field, value_field))
+            return dict([
+                (field, self.get_field_value(row, field, value_field))
                 for field, value_field in self.fields.items()
             ])
         else:
             return [text_type(field).format(**row) if RE_FORMATTED.match(field)
-                    else row[field]
+                    else getattr(row, field)
                     for field in self.fields]
 
     def render_to_response(self, form, **kwargs):
