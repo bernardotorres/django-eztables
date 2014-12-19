@@ -66,8 +66,9 @@ class DatatablesView(MultipleObjectMixin, View):
     def process_dt_response(self, data):
         self.form = DatatablesForm(data)
         if self.form.is_valid():
-            self.object_list = self.get_queryset().values(*self.get_db_fields())
+            self.object_list = self.get_queryset()
             return self.render_to_response(self.form)
+
         else:
             return HttpResponseBadRequest()
 
@@ -76,7 +77,9 @@ class DatatablesView(MultipleObjectMixin, View):
             self._db_fields = []
             fields = self.fields.values() if isinstance(self.fields, dict) else self.fields
             for field in fields:
-                if RE_FORMATTED.match(field):
+                if callable(field):
+                     continue
+                elif RE_FORMATTED.match(field):
                     self._db_fields.extend(RE_FORMATTED.findall(field))
                 else:
                     self._db_fields.append(field)
@@ -184,6 +187,18 @@ class DatatablesView(MultipleObjectMixin, View):
         num_page = (start_index / page_size) + 1
         return paginator.page(num_page)
 
+     def get_field_value(self, row, field, value_field):
+         if callable(value_field):
+             return value_field(row)
+         if RE_FORMATTED.match(value_field):
+             return field, text_type(value_field).format(**row)
+         elif value_field.find('__') > 0:
+             fields = value_field.split("__")
+             obj = getattr(row, fields[0])
+             return getattr(obj, fields[1])
+         else:
+             return getattr(row, value_field)
+
     def get_rows(self, rows):
         '''Format all rows'''
         return [self.get_row(row) for row in rows]
@@ -192,9 +207,9 @@ class DatatablesView(MultipleObjectMixin, View):
         '''Format a single row (if necessary)'''
 
         if isinstance(self.fields, dict):
-            return dict([
-                (key, text_type(value).format(**row) if RE_FORMATTED.match(value) else row[value])
-                for key, value in self.fields.items()
+            return dict([(
+                field, self.get_field_value(row, field, value_field))
+                for field, value_field in self.fields.items()
             ])
         else:
             return [text_type(field).format(**row) if RE_FORMATTED.match(field)
