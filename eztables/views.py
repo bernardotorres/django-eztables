@@ -187,18 +187,18 @@ class DatatablesView(MultipleObjectMixin, View):
         num_page = (start_index / page_size) + 1
         return paginator.page(num_page)
 
-     def get_field_value(self, row, field, value_field):
-         if callable(value_field):
-             return value_field(row)
-         elif RE_FORMATTED.match(value_field):
-             return field, text_type(value_field).format(**row)
-         elif value_field.find('__') > 0:
-             fields = value_field.split("__")
-             for subattr in fields:
-                 row = getattr(row, subattr)
-             return row
-         else:
-             return getattr(row, value_field)
+    def get_field_value(self, row, field, value_field):
+        if callable(value_field):
+            return value_field(row)
+        elif RE_FORMATTED.match(value_field):
+            return field, text_type(value_field).format(**row)
+        elif value_field.find('__') > 0:
+            fields = value_field.split("__")
+            for subattr in fields:
+                row = getattr(row, subattr)
+            return row
+        else:
+            return getattr(row, value_field)
 
     def get_rows(self, rows):
         '''Format all rows'''
