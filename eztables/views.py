@@ -190,12 +190,13 @@ class DatatablesView(MultipleObjectMixin, View):
      def get_field_value(self, row, field, value_field):
          if callable(value_field):
              return value_field(row)
-         if RE_FORMATTED.match(value_field):
+         elif RE_FORMATTED.match(value_field):
              return field, text_type(value_field).format(**row)
          elif value_field.find('__') > 0:
              fields = value_field.split("__")
-             obj = getattr(row, fields[0])
-             return getattr(obj, fields[1])
+             for subattr in fields:
+                 row = getattr(row, subattr)
+             return row
          else:
              return getattr(row, value_field)
 
