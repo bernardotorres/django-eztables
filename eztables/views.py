@@ -191,14 +191,14 @@ class DatatablesView(MultipleObjectMixin, View):
         if callable(value_field):
             return value_field(row)
         elif RE_FORMATTED.match(value_field):
-            return field, text_type(value_field).format(**row)
+            return text_type(value_field).format(**row.__dict__)
         elif value_field.find('__') > 0:
             fields = value_field.split("__")
             for subattr in fields:
                 row = getattr(row, subattr)
             return row
         else:
-            return getattr(row, value_field)
+            return row.__dict__.get(value_field)
 
     def get_rows(self, rows):
         '''Format all rows'''
@@ -213,8 +213,8 @@ class DatatablesView(MultipleObjectMixin, View):
                 for field, value_field in self.fields.items()
             ])
         else:
-            return [text_type(field).format(**row) if RE_FORMATTED.match(field)
-                    else getattr(row, field)
+            return [text_type(field).format(**row.__dict__) if RE_FORMATTED.match(field)
+                    else self.get_field_value(row, field, field)
                     for field in self.fields]
 
     def render_to_response(self, form, **kwargs):
